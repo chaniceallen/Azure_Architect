@@ -1,0 +1,299 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "15609984867232984221"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus2",
+      "allowedValues": [
+        "spaincentral",
+        "westus",
+        "eastus",
+        "japaneast",
+        "francecentral",
+        "eastus2",
+        "uaenorth",
+        "brazilsouth",
+        "germanywestcentral",
+        "italynorth",
+        "southcentralus",
+        "westcentralus",
+        "australiaeast",
+        "swedencentral",
+        "canadaeast",
+        "southafricanorth",
+        "westeurope",
+        "westus3",
+        "southindia",
+        "uksouth"
+      ],
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "isolationMode": {
+      "type": "string",
+      "defaultValue": "AllowOnlyApprovedOutbound",
+      "allowedValues": [
+        "AllowOnlyApprovedOutbound",
+        "AllowInternetOutbound"
+      ],
+      "metadata": {
+        "description": "The isolation mode for the managed network"
+      }
+    },
+    "aiServices": {
+      "type": "string",
+      "defaultValue": "aiservices",
+      "metadata": {
+        "description": "Name for your AI Services resource."
+      }
+    },
+    "deploymentTimestamp": {
+      "type": "string",
+      "defaultValue": "[utcNow('yyyyMMddHHmmss')]"
+    },
+    "firstProjectName": {
+      "type": "string",
+      "defaultValue": "project",
+      "metadata": {
+        "description": "Name for your project resource."
+      }
+    },
+    "projectDescription": {
+      "type": "string",
+      "defaultValue": "A project for the AI Foundry account with managed network secured deployed Agent",
+      "metadata": {
+        "description": "This project will be a sub-resource of your account"
+      }
+    },
+    "displayName": {
+      "type": "string",
+      "defaultValue": "managed network secured agent project",
+      "metadata": {
+        "description": "The display name of the project"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "my-vnet",
+      "metadata": {
+        "description": "Virtual Network name for the Agent to create new or existing virtual network"
+      }
+    },
+    "peSubnetName": {
+      "type": "string",
+      "defaultValue": "pe-subnet",
+      "metadata": {
+        "description": "The name of Private Endpoint subnet to create new or existing subnet for private endpoints"
+      }
+    },
+    "existingVnetResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing Virtual Network name Resource ID"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Address space for the VNet (only used for new VNet)"
+      }
+    },
+    "peSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Address prefix for the private endpoint subnet"
+      }
+    },
+    "existingNsgResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing Network Security Group resource ID to associate with the subnet"
+      }
+    },
+    "aiSearchResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The AI Search Service full ARM Resource ID. This is an optional field, and if not provided, the resource will be created."
+      }
+    },
+    "azureStorageAccountResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The AI Storage Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created."
+      }
+    },
+    "azureCosmosDBAccountResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The Cosmos DB Account full ARM Resource ID. This is an optional field, and if not provided, the resource will be created."
+      }
+    },
+    "apiManagementResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The API Management Service full ARM Resource ID. This is an optional field for existing API Management services."
+      }
+    },
+    "existingDnsZones": {
+      "type": "object",
+      "defaultValue": {
+        "privatelink.services.ai.azure.com": "",
+        "privatelink.openai.azure.com": "",
+        "privatelink.cognitiveservices.azure.com": "",
+        "privatelink.search.windows.net": "",
+        "privatelink.blob.core.windows.net": "",
+        "privatelink.documents.azure.com": "",
+        "privatelink.azure-api.net": ""
+      },
+      "metadata": {
+        "description": "Object mapping DNS zone names to their resource group, or empty string to indicate creation"
+      }
+    },
+    "dnsZoneNames": {
+      "type": "array",
+      "defaultValue": [
+        "privatelink.services.ai.azure.com",
+        "privatelink.openai.azure.com",
+        "privatelink.cognitiveservices.azure.com",
+        "privatelink.search.windows.net",
+        "privatelink.blob.core.windows.net",
+        "privatelink.documents.azure.com",
+        "privatelink.azure-api.net"
+      ],
+      "metadata": {
+        "description": "Zone Names for Validation of existing Private Dns Zones"
+      }
+    },
+    "projectCapHost": {
+      "type": "string",
+      "defaultValue": "caphostproj",
+      "metadata": {
+        "description": "The name of the project capability host to be created"
+      }
+    },
+    "existingRouteTableResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Existing Route Table resource ID to associate with the subnet"
+      }
+    }
+  },
+  "variables": {
+    "uniqueSuffix": "[substring(uniqueString(format('{0}-{1}', resourceGroup().id, parameters('deploymentTimestamp'))), 0, 4)]",
+    "accountName": "[toLower(format('{0}{1}', parameters('aiServices'), variables('uniqueSuffix')))]",
+    "projectName": "[toLower(format('{0}{1}', parameters('firstProjectName'), variables('uniqueSuffix')))]",
+    "cosmosDBName": "[toLower(format('{0}{1}cosmosdb', parameters('aiServices'), variables('uniqueSuffix')))]",
+    "aiSearchName": "[toLower(format('{0}{1}search', parameters('aiServices'), variables('uniqueSuffix')))]",
+    "azureStorageName": "[toLower(format('{0}{1}storage', parameters('aiServices'), variables('uniqueSuffix')))]",
+    "storagePassedIn": "[not(equals(parameters('azureStorageAccountResourceId'), ''))]",
+    "searchPassedIn": "[not(equals(parameters('aiSearchResourceId'), ''))]",
+    "cosmosPassedIn": "[not(equals(parameters('azureCosmosDBAccountResourceId'), ''))]",
+    "existingVnetPassedIn": "[not(equals(parameters('existingVnetResourceId'), ''))]",
+    "acsParts": "[split(parameters('aiSearchResourceId'), '/')]",
+    "aiSearchServiceSubscriptionId": "[if(variables('searchPassedIn'), variables('acsParts')[2], subscription().subscriptionId)]",
+    "aiSearchServiceResourceGroupName": "[if(variables('searchPassedIn'), variables('acsParts')[4], resourceGroup().name)]",
+    "cosmosParts": "[split(parameters('azureCosmosDBAccountResourceId'), '/')]",
+    "cosmosDBSubscriptionId": "[if(variables('cosmosPassedIn'), variables('cosmosParts')[2], subscription().subscriptionId)]",
+    "cosmosDBResourceGroupName": "[if(variables('cosmosPassedIn'), variables('cosmosParts')[4], resourceGroup().name)]",
+    "storageParts": "[split(parameters('azureStorageAccountResourceId'), '/')]",
+    "azureStorageSubscriptionId": "[if(variables('storagePassedIn'), variables('storageParts')[2], subscription().subscriptionId)]",
+    "azureStorageResourceGroupName": "[if(variables('storagePassedIn'), variables('storageParts')[4], resourceGroup().name)]",
+    "vnetParts": "[split(parameters('existingVnetResourceId'), '/')]",
+    "vnetSubscriptionId": "[if(variables('existingVnetPassedIn'), variables('vnetParts')[2], subscription().subscriptionId)]",
+    "vnetResourceGroupName": "[if(variables('existingVnetPassedIn'), variables('vnetParts')[4], resourceGroup().name)]",
+    "existingVnetName": "[if(variables('existingVnetPassedIn'), last(variables('vnetParts')), parameters('vnetName'))]",
+    "trimVnetName": "[trim(variables('existingVnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('vnet-{0}-{1}-deployment', variables('trimVnetName'), variables('uniqueSuffix'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetName": {
+            "value": "[variables('trimVnetName')]"
+          },
+          "useExistingVnet": {
+            "value": "[variables('existingVnetPassedIn')]"
+          },
+          "existingVnetResourceGroupName": {
+            "value": "[variables('vnetResourceGroupName')]"
+          },
+          "peSubnetName": {
+            "value": "[parameters('peSubnetName')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          },
+          "peSubnetPrefix": {
+            "value": "[parameters('peSubnetPrefix')]"
+          },
+          "existingNsgResourceId": {
+            "value": "[parameters('existingNsgResourceId')]"
+          },
+          "existingVnetSubscriptionId": {
+            "value": "[variables('vnetSubscriptionId')]"
+          },
+          "existingRouteTableResourceId": {
+            "value": "[parameters('existingRouteTableResourceId')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "17445593936032020020"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for the deployment"
+              }
+            },
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the virtual network"
+              }
+            },
+            "useExistingVnet": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Indicates if an existing VNet should be used"
+              }
+            },
+            "existingVnetSubscriptionId": {
+              "type": "string",
+              "default
