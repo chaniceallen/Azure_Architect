@@ -1,0 +1,65 @@
+Adding Rule for Managed Private Endpoint for Foundry Instance (Managed Vnet)
+
+Option 1: Results in UnSupported Media Type Error
+# === EDIT THESE VALUES ===
+$subscriptionId     = "subscription ID"
+$foundryRg          = "rg-name"
+$foundryName        = "foundry-name"
+$searchRg           = "rsearch-rg-name"       
+$searchName         = "aisearch-name"                  
+                      
+
+# === Body ===
+$body = @"
+{
+  "properties": {
+    "type": "PrivateEndpoint",
+    "destination": {
+      "serviceResourceId": "/subscriptions/$subscriptionId/resourceGroups/$searchRg/providers/Microsoft.Search/searchServices/$searchName",
+      "subresourceTarget": "searchService"
+    },
+    "category": "UserDefined"
+  }
+}
+"@
+
+# === Run this command ===
+az rest --method PUT `
+  --url "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$foundryRg/providers/Microsoft.CognitiveServices/accounts/$foundryName/managedNetworks/default/outboundRules/aisearch-private?api-version=2025-10-01-preview" `
+  --body $body `
+  --headers "Content-Type=application/json"
+
+
+Option 2: Create JSON File
+
+Step 1: Create the JSON File
+$searchRg = "rg-apptier-Collaboration-AIsearch-eastus2"
+
+$body = @{
+    properties = @{
+        type = "PrivateEndpoint"
+        destination = @{
+            serviceResourceId = "/subscriptions/{Sub Id}/resourceGroups/$searchRg/providers/Microsoft.Search/searchServices/{search-name}"
+            subresourceTarget = "searchService"
+        }
+        category = "UserDefined"
+    }
+} | ConvertTo-Json -Depth 10 -Compress
+
+$body | Out-File -FilePath "body.json" -Encoding utf8
+
+
+Step 2: Check it was created:
+# Check if the file exists and show its content
+Get-ChildItem -Path "body.json" 
+
+# Show the actual content of the file
+Get-Content -Path "body.json" -Raw
+
+
+Step 3: Run Put command:
+
+az rest --method PUT `
+  --url "https://management.azure.com/subscriptions/{sub ID}/resourceGroups/{rg-name}/providers/Microsoft.CognitiveServices/accounts/{foundry-account-name}/managedNetworks/default/outboundRules/{outbound-rule-name}?api-version=2026-03-15-preview" `
+  --headers "Content-Type=application/json" `
+  --body "@body.json"
